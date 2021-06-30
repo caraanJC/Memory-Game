@@ -10,6 +10,11 @@ class MemoryGame {
     this.timeId = '';
     this.difficulty = 'easy';
     this.playerName = 'player01';
+    this.rank = '';
+    this.celebrateMessage = '';
+
+    this.fightingSpirit = new Audio('./assets/bgm/fighting-spirit.mp3');
+    this.fightingSpirit.volume = 0.1;
 
     this.storageTools = {
       easy: {
@@ -128,8 +133,6 @@ class MemoryGame {
   hideCard(card1, card2) {
     card1.classList.add('hide');
     card2.classList.add('hide');
-    card1.classList.add('preventClick');
-    card2.classList.add('preventClick');
   }
 
   // checks if there's a class called clicked
@@ -286,6 +289,22 @@ class MemoryGame {
     return JSON.parse(localStorage.getItem('hard_3rd'));
   }
 
+  changeRank(rank) {
+    this.rank = rank;
+  }
+
+  getRank() {
+    return this.rank;
+  }
+
+  changeCelebrateMessage() {
+    this.fightingSpirit.muted = true;
+    const victoryBGM = new Audio('./assets/bgm/victory.mp3');
+    victoryBGM.volume = 0.5;
+    victoryBGM.play();
+    this.celebrateMessage = `<p class="celebrate-message">You earned ${this.getRank()} place!!!</p>`;
+  }
+
   replaceThirdWithSecond() {
     const secondPlace = this.storageTools[this.difficulty].second.get();
     if (!secondPlace) return;
@@ -301,6 +320,8 @@ class MemoryGame {
   }
 
   replaceFirstWithChallenger() {
+    this.changeRank('1st');
+    this.changeCelebrateMessage();
     return this.storageTools[this.difficulty].first.set(
       this.getName(),
       this.getTime()
@@ -308,6 +329,8 @@ class MemoryGame {
   }
 
   replaceSecondWithChallenger() {
+    this.changeRank('2nd');
+    this.changeCelebrateMessage();
     return this.storageTools[this.difficulty].second.set(
       this.getName(),
       this.getTime()
@@ -315,6 +338,8 @@ class MemoryGame {
   }
 
   replaceThirdWithChallenger() {
+    this.changeRank('3rd');
+    this.changeCelebrateMessage();
     return this.storageTools[this.difficulty].third.set(
       this.getName(),
       this.getTime()
@@ -362,7 +387,10 @@ class MemoryGame {
     winningMessage.innerHTML = `
       <h1>Mission Complete</h1>
       <p>Time: ${this.currentTime} seconds</p>
-      <p class="difficulty">Difficulty: <span class="${this.difficulty}">${this.difficulty}</p></p>
+      <p class="difficulty">Difficulty: <span class="${this.difficulty}">${
+      this.difficulty
+    }</p></p>
+      ${this.rank ? this.celebrateMessage : ''}
       <button id="play-again" class="play-again">Play Again</button>
     `;
     this.gameSlideOut();
@@ -383,17 +411,59 @@ class MemoryGame {
     }, 3000);
   }
 
+  throwKunai(card1, card2) {
+    const knifeSound = new Audio('./assets/sfx/kunai-hit.mp3');
+    const kunai1 = document.createElement('img');
+    kunai1.classList.add('throwing-kunai');
+    kunai1.style.top = `${
+      card1.getBoundingClientRect().top -
+      this.gameContainer.getBoundingClientRect().top
+    }px`;
+    kunai1.style.left = `${
+      card1.getBoundingClientRect().left -
+      this.gameContainer.getBoundingClientRect().left
+    }px`;
+    const kunai2 = document.createElement('img');
+    kunai2.classList.add('throwing-kunai');
+    kunai2.style.top = `${
+      card2.getBoundingClientRect().top -
+      this.gameContainer.getBoundingClientRect().top
+    }px`;
+    kunai2.style.left = `${
+      card2.getBoundingClientRect().left -
+      this.gameContainer.getBoundingClientRect().left
+    }px`;
+    this.gameContainer.appendChild(kunai1);
+    this.gameContainer.appendChild(kunai2);
+
+    setTimeout(() => {
+      kunai1.classList.add('throw');
+      kunai2.classList.add('throw');
+    }, 10);
+
+    setTimeout(() => {
+      knifeSound.play();
+    }, 300);
+  }
+
+  preventClick(card1, card2) {
+    card1.classList.add('preventClick');
+    card2.classList.add('preventClick');
+  }
+
   //   checks if card1 is the same as card2
   checkForMatch(card1, card2) {
     if (card1.alt == card2.alt) {
-      setTimeout(() => this.hideCard(card1, card2), 200);
+      this.preventClick(card1, card2);
+      this.throwKunai(card1, card2);
+      setTimeout(() => this.hideCard(card1, card2), 1500);
       this.increaseScore();
       if (this.score == this.memoryNames.length / 2) {
         this.stopTime();
         setTimeout(() => {
           this.cleanGameContainer();
           this.displayWinningMessage();
-        }, 1000);
+        }, 2000);
       }
     } else {
       setTimeout(() => {
@@ -445,10 +515,8 @@ class MemoryGame {
       setTimeout(() => card.classList.remove('preventClick'), 3500);
       setTimeout(() => this.showBackSide(card), 3500);
       card.style.order = Math.floor(Math.random() * 10);
-
       card.onclick = () => this.cardClickHandler(event);
       card.ondragstart = () => false;
-
       this.gameContainer.appendChild(card);
     });
   }
@@ -481,6 +549,7 @@ class MemoryGame {
 
 class Welcome {
   constructor() {
+    this.welcomeWindow = document.getElementById('welcomeWindow');
     this.playNowBtn = document.getElementById('play-now');
     this.difficultyRadios = document.querySelectorAll('#difficultyGroup input');
     this.bodyMarginTop = 0;
@@ -714,7 +783,18 @@ class Welcome {
     };
   }
 
+  yell() {
+    const yellSFX = [
+      new Audio('./assets/sfx/rasengan.mp3'),
+      new Audio('./assets/sfx/shinra-tensei.mp3'),
+    ];
+
+    return yellSFX[Math.floor(Math.random() * yellSFX.length)].play();
+  }
+
   playNowBtnClickHandler(e) {
+    this.yell();
+    this.newGame.fightingSpirit.play();
     e.preventDefault();
     e.target.disabled = 'true';
     this.moveScreenUp();
