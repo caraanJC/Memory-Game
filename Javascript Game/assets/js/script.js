@@ -130,7 +130,7 @@ class MemoryGame {
       this.timeId = setInterval(() => {
         this.increaseTime(1);
       }, 1000);
-    }, 2000);
+    }, 6000);
   }
 
   getTime() {
@@ -607,8 +607,8 @@ class MemoryGame {
       card.alt = name;
       this.showFrontSide(card);
       card.classList.add('preventClick');
-      setTimeout(() => card.classList.remove('preventClick'), 3500);
-      setTimeout(() => this.showBackSide(card), 3500);
+      setTimeout(() => card.classList.remove('preventClick'), 6000);
+      setTimeout(() => this.showBackSide(card), 6000);
       card.style.order = Math.floor(Math.random() * 10);
       card.onclick = () => this.cardClickHandler(event);
       card.ondragstart = () => false;
